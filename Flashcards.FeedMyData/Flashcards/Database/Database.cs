@@ -90,7 +90,7 @@ public sealed class Database
         string sql = """
             IF OBJECT_ID(N'poop.flashcards', N'U') IS NULL
                 CREATE TABLE poop.flashcards (
-                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    flashcardId INT IDENTITY(1,1) PRIMARY KEY,
                     recto NVARCHAR(MAX),
                     verso NVARCHAR(MAX),
                     stackId INT NOT NULL,
@@ -112,6 +112,34 @@ public sealed class Database
         string sql = @$"INSERT INTO {stacksTableName} (stackName) VALUES (@stackName)";
 
         _connection.Execute(connection => connection.Execute(sql, new { stackName }));
+    }
+
+    internal void DeleteStack(string stackName)
+    {
+        string sql = @$"DELETE FROM {stacksTableName} WHERE stackName = @stackName";
+
+        _connection.Execute(connection => connection.Execute(sql, new { stackName }));
+    }
+
+    internal void DeleteFlashcard(string flashcardName)
+    {
+        string sql = @$"DELETE FROM {flashcardsTableName} WHERE flashcardName = @flashcardName";
+
+        _connection.Execute(connection => connection.Execute(sql, new { flashcardName }));
+    }
+
+    internal void UpdateStack(Stack stack)
+    {
+        string sql = @$"UPDATE {stacksTableName} (stackName) SET name = @name WHERE stackId = @stackId";
+
+        _connection.Execute(connection => connection.Execute(sql, new { stack.Name, stack.StackId }));
+    }
+
+    internal void UpdateFlashcard(Flashcard f)
+    {
+        string sql = @$"UPDATE{flashcardsTableName} SET recto = @recto, verso = @verso";
+
+        _connection.Execute(connection => connection.Execute(sql, new { f.Recto, f.Verso }));
     }
 
     internal List<Flashcard> SelectAllFromFlashCard()
