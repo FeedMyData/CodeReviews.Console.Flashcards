@@ -8,6 +8,7 @@ class Program
 {
     static void Main(string[] args)
     {
+        Displayer.PrintTitle();
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
@@ -25,7 +26,8 @@ class Program
             var tcsaDatabase = new Database(tcsaProvider);
 
             masterDatabase.CreateDB();
-            tcsaDatabase.DropAll();
+
+            //tcsaDatabase.DropAll();
             int tableCount = tcsaDatabase.GetAppTableCount();
 
             if (tableCount == 0)
@@ -34,12 +36,9 @@ class Program
             else if (tableCount != 2)
                 ResetDatabase(tcsaDatabase);
 
-            // --------------------
-            var test = tcsaDatabase.SelectAllFromFlashCard();
-            foreach (Flashcard flashcard in test)
-                Console.WriteLine(flashcard.Recto + " => " + flashcard.Verso);
+            UserInterface.MainMenu();
+            Testing.FlashCardList(tcsaDatabase);
 
-            // UserInterface.MainMenu();
         }
         catch (SqlException ex)
         {
@@ -65,9 +64,23 @@ class Program
 
     private static void FirstStartup(Database database)
     {
-        database.CreateSchema();
-        database.CreateTables();
-        Seeder.Seed(database);
+        Displayer.Loading("FIRST STARTUP",
+                           task =>
+        {
+            task.Description = "Create Schema";
+            database.CreateSchema();
+            task.Increment(1);
+
+            task.Description = "Create tables";
+            database.CreateTables();
+            task.Increment(1);
+
+            Seeder.Seed(database, (completed, total) =>
+            {
+                task.Value = 2 + (double)completed / total;
+                task.Description = $"Adding random data";
+            });
+        });
     }
 
     private static void ResetDatabase(Database database)
