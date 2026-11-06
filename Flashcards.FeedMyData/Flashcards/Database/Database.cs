@@ -5,8 +5,8 @@ namespace Flashcards;
 public sealed class Database
 {
     private readonly DbConnectionProvider _connection;
-    private const string flashcardsTableName = "poop.flashcards";
-    private const string stacksTableName = "poop.stacks";
+    private const string flashcardsTableName = "flash.flashcards";
+    private const string stacksTableName = "flash.stacks";
 
     public Database(DbConnectionProvider connectionProvider)
     {
@@ -23,8 +23,8 @@ public sealed class Database
 
     internal void CreateSchema()
     {
-        string sql = @$"IF SCHEMA_id(N'poop') IS NULL
-                            EXEC(N'CREATE SCHEMA [poop]')";
+        string sql = @$"IF SCHEMA_id(N'flash') IS NULL
+                            EXEC(N'CREATE SCHEMA [flash]')";
 
         _connection.Execute(connection => connection.Execute(sql));
     }
@@ -33,14 +33,14 @@ public sealed class Database
     {
         // const string sql = """
         // SELECT
-        //     CASE WHEN OBJECT_ID(N'poop.stacks', N'U') IS NOT NULL THEN 1 ELSE 0 END
-        //   + CASE WHEN OBJECT_ID(N'poop.flashcards', N'U') IS NOT NULL THEN 1 ELSE 0 END;
+        //     CASE WHEN OBJECT_ID(N'flash.stacks', N'U') IS NOT NULL THEN 1 ELSE 0 END
+        //   + CASE WHEN OBJECT_ID(N'flash.flashcards', N'U') IS NOT NULL THEN 1 ELSE 0 END;
         // """;
 
         const string sql = """
                     SELECT COUNT(*) AS TableCount
                     FROM INFORMATION_SCHEMA.TABLES
-                    WHERE TABLE_SCHEMA = 'poop'
+                    WHERE TABLE_SCHEMA = 'flash'
                     AND TABLE_TYPE = 'BASE TABLE';
                     """;
 
@@ -57,8 +57,12 @@ public sealed class Database
     {
         // This fails if the schema contains non-table objects. 
         // To drop all objects (tables, views, procedures) in a schema, you must generate DROP statements for each object type
+        string dropStack = "DROP TABLE IF EXISTS flash.flashcards";
+
+        _connection.Execute(connection => connection.Execute(dropStack));
+
         string sql = """
-            DECLARE @SchemaName NVARCHAR(128) = 'poop';
+            DECLARE @SchemaName NVARCHAR(128) = 'flash';
         DECLARE @DropTables NVARCHAR(MAX) = '';
 
         --Drop Tables
@@ -76,8 +80,8 @@ public sealed class Database
     private void CreateTableStacks()
     {
         string sql = """
-            IF OBJECT_ID(N'tcsa.poop.stacks', N'U') IS NULL
-                CREATE TABLE tcsa.poop.stacks(
+            IF OBJECT_ID(N'tcsa.flash.stacks', N'U') IS NULL
+                CREATE TABLE tcsa.flash.stacks(
                     stackId INT IDENTITY(1, 1) PRIMARY KEY,
                     stackName NVARCHAR(200) NOT NULL)
             """;
@@ -88,13 +92,13 @@ public sealed class Database
     private void CreateTableFlashcards()
     {
         string sql = """
-            IF OBJECT_ID(N'poop.flashcards', N'U') IS NULL
-                CREATE TABLE poop.flashcards (
+            IF OBJECT_ID(N'flash.flashcards', N'U') IS NULL
+                CREATE TABLE flash.flashcards (
                     flashcardId INT IDENTITY(1,1) PRIMARY KEY,
                     recto NVARCHAR(MAX),
                     verso NVARCHAR(MAX),
                     stackId INT NOT NULL,
-                    FOREIGN KEY (stackId) REFERENCES poop.stacks(stackId))
+                    FOREIGN KEY (stackId) REFERENCES flash.stacks(stackId))
             """;
 
         _connection.Execute(connection => connection.Execute(sql));
