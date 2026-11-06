@@ -14,27 +14,32 @@ internal static class Seeder
                 "Country to Capital"
                 };
 
-    internal static void Seed(Database database)
+    internal static void Seed(Database database, Action<int, int> reportProgress)
     {
         CreateStacks(database);
-        FillStacks(database);
+        FillStacks(database, reportProgress);
     }
 
-    private static void FillStacks(Database database)
+    private static void FillStacks(Database database, Action<int, int> reportProgress)
     {
         List<CountriesInfo> countries = CsvReader();
+        Random rand = new();
+        int countriesAdded = 0;
 
-        foreach (CountriesInfo country in countries)
+        for (int i = 0; i < countries.Count; i++)
         {
-            Random rand = new();
-            int includeCountry = rand.Next(1, 6);
+            CountriesInfo country = countries[i];
+            int diceRoll = rand.Next(1, 6);
 
-            if (includeCountry == 1)
+
+            if (diceRoll == 7)
             {
                 database.AddFlashcard(1, country.Country, country.Continent);
                 database.AddFlashcard(2, country.Capital, country.Country);
                 database.AddFlashcard(3, country.Country, country.Capital);
             }
+
+            reportProgress(i + 1, countries.Count);
         }
     }
 
