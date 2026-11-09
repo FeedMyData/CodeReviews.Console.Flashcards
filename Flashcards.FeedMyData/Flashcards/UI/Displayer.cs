@@ -31,4 +31,23 @@ internal class Displayer
                 work(task);
             });
     }
+
+    internal static void GenericError(string message)
+    {
+        AnsiConsole.MarkupLine($"[red]{message}[/]");
+        AnsiConsole.MarkupLine($"[grey]Press any key to go back to the Main Menu.[/]");
+        Console.ReadKey();
+    }
+
+    internal static void CrudSuccess(string objectType, string action)
+    {
+        AnsiConsole.MarkupLine($"[green]The {objectType} has been {action}.[/]");
+        AnsiConsole.WriteLine();
+    }
+
+    internal static void CrudDiscard(string objectType, string action)
+    {
+        AnsiConsole.MarkupLine($"[red]The {objectType} has been {action}.[/]");
+        AnsiConsole.WriteLine();
+    }
 }

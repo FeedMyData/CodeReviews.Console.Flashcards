@@ -36,8 +36,10 @@ class Program
             else if (tableCount != 2)
                 ResetDatabase(tcsaDatabase);
 
-            UserInterface.MainMenu();
-            Testing.FlashCardList(tcsaDatabase);
+            UserInterface userInterface = new(tcsaDatabase);
+            userInterface.MainMenu();
+
+            //Testing.FlashCardList(tcsaDatabase);
 
         }
         catch (SqlException ex)
