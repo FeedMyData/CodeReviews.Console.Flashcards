@@ -44,13 +44,11 @@ class Program
         }
         catch (SqlException ex)
         {
-            AnsiConsole.MarkupLine("[red]Database operation failed. The application cannot continue startup.[/]");
-            AnsiConsole.MarkupLine($"[grey]{Markup.Escape(ex.Message)}[/]");
+            AnsiConsole.MarkupLine($"[red]{Markup.Escape(ex.Message)}[/]");
         }
         catch (InvalidOperationException ex)
         {
-            AnsiConsole.MarkupLine("[red]Operation failed. The application cannot continue startup.[/]");
-            AnsiConsole.MarkupLine($"[grey]{Markup.Escape(ex.Message)}[/]");
+            AnsiConsole.MarkupLine($"[red]{Markup.Escape(ex.Message)}[/]");
         }
 
         Console.WriteLine("Press any key to quit.");
