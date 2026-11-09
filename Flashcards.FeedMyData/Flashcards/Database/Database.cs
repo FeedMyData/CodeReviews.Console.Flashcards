@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.VisualBasic;
 
 namespace Flashcards;
 
@@ -12,6 +13,10 @@ public sealed class Database
     {
         _connection = connectionProvider;
     }
+
+    // ------------------------
+    // ---- SETUP METHODS -----
+    // ------------------------
 
     internal void CreateDB()
     {
@@ -83,7 +88,7 @@ public sealed class Database
             IF OBJECT_ID(N'tcsa.flash.stacks', N'U') IS NULL
                 CREATE TABLE tcsa.flash.stacks(
                     stackId INT IDENTITY(1, 1) PRIMARY KEY,
-                    stackName NVARCHAR(200) NOT NULL)
+                    name NVARCHAR(200) NOT NULL)
             """;
 
         _connection.Execute(connection => connection.Execute(sql));
@@ -104,6 +109,10 @@ public sealed class Database
         _connection.Execute(connection => connection.Execute(sql));
     }
 
+    // ------------------------
+    // ---- CRUD METHODS -----
+    // ------------------------
+
     internal void AddFlashcard(int stackId, string recto, string verso)
     {
         string sql = @$"INSERT INTO {flashcardsTableName} (stackId, recto, verso) VALUES (@stackId, @recto, @verso )";
@@ -111,18 +120,18 @@ public sealed class Database
         _connection.Execute(connection => connection.Execute(sql, new { stackId, recto, verso, }));
     }
 
-    internal void AddStack(string stackName)
+    internal void AddStack(string name)
     {
-        string sql = @$"INSERT INTO {stacksTableName} (stackName) VALUES (@stackName)";
+        string sql = @$"INSERT INTO {stacksTableName} (name) VALUES (@name)";
 
-        _connection.Execute(connection => connection.Execute(sql, new { stackName }));
+        _connection.Execute(connection => connection.Execute(sql, new { name }));
     }
 
-    internal void DeleteStack(string stackName)
+    internal void DeleteStack(string name)
     {
-        string sql = @$"DELETE FROM {stacksTableName} WHERE stackName = @stackName";
+        string sql = @$"DELETE FROM {stacksTableName} WHERE name = @name";
 
-        _connection.Execute(connection => connection.Execute(sql, new { stackName }));
+        _connection.Execute(connection => connection.Execute(sql, new { name }));
     }
 
     internal void DeleteFlashcard(string flashcardName)
@@ -134,7 +143,7 @@ public sealed class Database
 
     internal void UpdateStack(Stack stack)
     {
-        string sql = @$"UPDATE {stacksTableName} (stackName) SET name = @name WHERE stackId = @stackId";
+        string sql = @$"UPDATE {stacksTableName} (name) SET name = @name WHERE stackId = @stackId";
 
         _connection.Execute(connection => connection.Execute(sql, new { stack.Name, stack.StackId }));
     }
@@ -146,9 +155,25 @@ public sealed class Database
         _connection.Execute(connection => connection.Execute(sql, new { f.Recto, f.Verso }));
     }
 
-    internal List<Flashcard> SelectAllFromFlashCard()
+    // ------------------------
+    // ---- QUERY METHODS -----
+    // ------------------------
+
+    internal List<Flashcard> SelectAllFromFlashcards()
     {
         string sql = @$"SELECT * FROM {flashcardsTableName} ORDER BY recto ASC";
         return _connection.Execute(connection => connection.Query<Flashcard>(sql).ToList());
+    }
+
+    internal List<Stack> SelectAllFromStacks()
+    {
+        string sql = @$"SELECT * FROM {stacksTableName} ORDER BY name ASC";
+        return _connection.Execute(connection => connection.Query<Stack>(sql).ToList());
+    }
+
+    internal Stack? SelectNewestStack()
+    {
+        string sql = @$"SELECT TOP (1) * FROM {stacksTableName} ORDER BY stackId DESC";
+        return _connection.Execute(connection => connection.QueryFirstOrDefault<Stack>(sql));
     }
 }
