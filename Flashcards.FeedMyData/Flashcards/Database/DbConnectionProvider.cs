@@ -28,10 +28,7 @@ public sealed class DbConnectionProvider
             }
             catch (SqlException ex)
             {
-                AnsiConsole.MarkupLine("[red]The app cannot access its database.[/]");
                 AnsiConsole.MarkupLine($"[grey]{ex.Message}[/]");
-                AnsiConsole.MarkupLine("[grey]Ensure the local docker server is running before retrying.[/]");
-                AnsiConsole.MarkupLine("[grey]'n' will quit the app.[/]");
                 bool retry = AnsiConsole.Confirm("Do you want to retry?");
 
                 if (!retry)
