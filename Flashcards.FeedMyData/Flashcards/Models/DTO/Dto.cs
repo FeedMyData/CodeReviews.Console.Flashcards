@@ -1,7 +1,7 @@
 namespace Flashcards;
 
-public record FlaschcardDto(int displayId, string recto, string verso);
-public record StackDto(int displayId, string name);
+internal record FlaschcardDto(int displayId, string recto, string verso);
+internal record StackDto(int displayId, string name);
 
 // public class FlaschcardDto
 // {

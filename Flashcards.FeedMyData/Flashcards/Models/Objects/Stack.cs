@@ -3,13 +3,16 @@ namespace Flashcards;
 internal class Stack
 {
   internal int StackId { get; private set; }
-  internal int FlashcardID { get; private set; }
   internal string Name { get; private set; }
 
-  public Stack(int stackid, int flashcardID, string name)
+  public Stack(int stackId, string name)
   {
-    StackId = stackid;
-    FlashcardID = FlashcardID;
+    StackId = stackId;
+    Name = name;
+  }
+
+  internal void EditName(string name)
+  {
     Name = name;
   }
 }

@@ -127,18 +127,18 @@ public sealed class Database
         _connection.Execute(connection => connection.Execute(sql, new { name }));
     }
 
-    internal void DeleteStack(string name)
+    internal void DeleteStack(Stack stack)
     {
-        string sql = @$"DELETE FROM {stacksTableName} WHERE name = @name";
+        string sql = @$"DELETE FROM {stacksTableName} WHERE stackId = @stackId";
 
-        _connection.Execute(connection => connection.Execute(sql, new { name }));
+        _connection.Execute(connection => connection.Execute(sql, new { stack.StackId }));
     }
 
-    internal void DeleteFlashcard(string flashcardName)
+    internal void DeleteFlashcard(Flashcard f)
     {
-        string sql = @$"DELETE FROM {flashcardsTableName} WHERE flashcardName = @flashcardName";
+        string sql = @$"DELETE FROM {flashcardsTableName} WHERE flashcardId = @flashcardId";
 
-        _connection.Execute(connection => connection.Execute(sql, new { flashcardName }));
+        _connection.Execute(connection => connection.Execute(sql, new { f.FlashcardId }));
     }
 
     internal void UpdateStack(Stack stack)
@@ -159,19 +159,25 @@ public sealed class Database
     // ---- QUERY METHODS -----
     // ------------------------
 
-    internal List<Flashcard> SelectAllFromFlashcards()
+    internal List<Flashcard> QueryAllFromFlashcards()
     {
         string sql = @$"SELECT * FROM {flashcardsTableName} ORDER BY recto ASC";
         return _connection.Execute(connection => connection.Query<Flashcard>(sql).ToList());
     }
 
-    internal List<Stack> SelectAllFromStacks()
+    internal List<Flashcard> QueryFlashcardsFromStack(Stack stack)
+    {
+        string sql = @$"SELECT * FROM {flashcardsTableName} WHERE stackId = @stackId ORDER BY recto ASC";
+        return _connection.Execute(connection => connection.Query<Flashcard>(sql, new { stack.StackId }).ToList());
+    }
+
+    internal List<Stack> QueryAllFromStacks()
     {
         string sql = @$"SELECT * FROM {stacksTableName} ORDER BY name ASC";
         return _connection.Execute(connection => connection.Query<Stack>(sql).ToList());
     }
 
-    internal Stack? SelectNewestStack()
+    internal Stack? QueryNewestStack()
     {
         string sql = @$"SELECT TOP (1) * FROM {stacksTableName} ORDER BY stackId DESC";
         return _connection.Execute(connection => connection.QueryFirstOrDefault<Stack>(sql));

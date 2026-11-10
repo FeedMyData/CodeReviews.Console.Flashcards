@@ -4,7 +4,6 @@ namespace Flashcards;
 
 internal class Displayer
 {
-
     internal static void PrintTitle()
     {
         string path = Path.Combine(AppContext.BaseDirectory,
@@ -39,15 +38,21 @@ internal class Displayer
         Console.ReadKey();
     }
 
-    internal static void CrudSuccess(string objectType, string action)
+    internal static void CrudSuccess(string thing, string adjective)
     {
-        AnsiConsole.MarkupLine($"[green]The {objectType} has been {action}.[/]");
+        AnsiConsole.MarkupLine($"[green]The {thing} has been {adjective}.[/]");
         AnsiConsole.WriteLine();
     }
 
-    internal static void CrudDiscard(string objectType, string action)
+    internal static void CrudDiscard(string thing, string adjective)
     {
-        AnsiConsole.MarkupLine($"[red]The {objectType} has been {action}.[/]");
+        AnsiConsole.MarkupLine($"[Orange1]The {thing} has been {adjective}.[/]");
         AnsiConsole.WriteLine();
+    }
+
+    internal static void CleanConsole()
+    {
+        Console.Clear();
+        PrintTitle();
     }
 }
