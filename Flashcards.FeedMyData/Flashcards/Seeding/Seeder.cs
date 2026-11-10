@@ -29,10 +29,10 @@ internal static class Seeder
         for (int i = 0; i < countries.Count; i++)
         {
             CountriesInfo country = countries[i];
-            int diceRoll = rand.Next(1, 6);
+            int diceRoll = rand.Next(1, 7);
 
 
-            if (diceRoll == 7)
+            if (diceRoll == 6)
             {
                 database.AddFlashcard(1, country.Country, country.Continent);
                 database.AddFlashcard(2, country.Capital, country.Country);
