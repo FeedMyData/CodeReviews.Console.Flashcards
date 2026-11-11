@@ -103,7 +103,9 @@ public sealed class Database
                     recto NVARCHAR(MAX),
                     verso NVARCHAR(MAX),
                     stackId INT NOT NULL,
-                    FOREIGN KEY (stackId) REFERENCES flash.stacks(stackId))
+                    FOREIGN KEY (stackId) REFERENCES flash.stacks(stackId)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE)
             """;
 
         _connection.Execute(connection => connection.Execute(sql));
