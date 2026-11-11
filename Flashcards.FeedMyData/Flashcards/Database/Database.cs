@@ -145,16 +145,16 @@ public sealed class Database
 
     internal void UpdateStack(Stack stack)
     {
-        string sql = @$"UPDATE {stacksTableName} (name) SET name = @name WHERE stackId = @stackId";
+        string sql = @$"UPDATE {stacksTableName} SET name = @name WHERE stackId = @stackId";
 
         _connection.Execute(connection => connection.Execute(sql, new { stack.Name, stack.StackId }));
     }
 
     internal void UpdateFlashcard(Flashcard f)
     {
-        string sql = @$"UPDATE{flashcardsTableName} SET recto = @recto, verso = @verso";
+        string sql = @$"UPDATE {flashcardsTableName} SET recto = @recto, verso = @verso WHERE flashcardId = @flashcardId";
 
-        _connection.Execute(connection => connection.Execute(sql, new { f.Recto, f.Verso }));
+        _connection.Execute(connection => connection.Execute(sql, new { f.Recto, f.Verso, f.FlashcardId }));
     }
 
     // ------------------------
