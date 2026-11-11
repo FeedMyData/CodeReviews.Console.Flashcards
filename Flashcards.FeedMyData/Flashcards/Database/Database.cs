@@ -88,7 +88,7 @@ public sealed class Database
             IF OBJECT_ID(N'tcsa.flash.stacks', N'U') IS NULL
                 CREATE TABLE tcsa.flash.stacks(
                     stackId INT IDENTITY(1, 1) PRIMARY KEY,
-                    name NVARCHAR(200) NOT NULL)
+                    name NVARCHAR(200) NOT NULL UNIQUE)
             """;
 
         _connection.Execute(connection => connection.Execute(sql));
