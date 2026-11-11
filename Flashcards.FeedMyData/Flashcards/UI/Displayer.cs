@@ -38,6 +38,13 @@ internal class Displayer
         Console.ReadKey();
     }
 
+    internal static void FlashcardNeedStackError()
+    {
+        AnsiConsole.MarkupLine("[Orange1]Operation aborpted: a flashcard need a stack.[/]");
+        AnsiConsole.MarkupLine("[grey]Press any key to go back to the previous menu.[/]");
+        Console.ReadKey();
+    }
+
     internal static void CrudSuccess(string thing, string adjective)
     {
         AnsiConsole.MarkupLine($"[green]The {thing} has been {adjective}.[/]");
@@ -54,5 +61,21 @@ internal class Displayer
     {
         Console.Clear();
         PrintTitle();
+    }
+
+    internal static void PrintTable(List<FlaschcardDto> flashcards)
+    {
+        Table table = new Table()
+        .RoundedBorder()
+        .AddColumn("N")
+        .AddColumn("Recto")
+        .AddColumn("Verso");
+
+        foreach (var entry in flashcards)
+        {
+            string[] rowData = { entry.displayId.ToString(), entry.recto, entry.verso };
+            TableExtensions.AddRow(table, rowData);
+        }
+        AnsiConsole.Write(table);
     }
 }

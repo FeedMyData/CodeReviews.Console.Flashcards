@@ -1,4 +1,3 @@
-using System.Reflection.Metadata.Ecma335;
 using Microsoft.Data.SqlClient;
 using Spectre.Console;
 
@@ -14,13 +13,11 @@ internal class UserInterface
         _database = database;
     }
 
-    internal bool MainMenu()
+    internal void MainMenu()
     {
-        // Ensure loading stay displayed on first launch
-        bool exitApp = false;
-
-        while (!exitApp)
+        while (true)
         {
+            // Ensure loading stay displayed on first launch
             displayCount++;
             if (displayCount != 1)
                 Displayer.CleanConsole();
@@ -43,30 +40,26 @@ internal class UserInterface
                         Displayer.GenericError("Not implemented.");
                         break;
                     case Enums.MenuChoice.manageFlashcards:
-                        CrudMenu("Flashcard", AddFlashcard, EditFlashcard, DeleteFlashcard);
+                        CrudMenu("Flashcard", viewFlashcard, AddFlashcard, EditFlashcard, DeleteFlashcard);
                         break;
                     case Enums.MenuChoice.manageStacks:
-                        CrudMenu("Stack", AddStack, EditStack, DeleteStack);
+                        CrudMenu("Stack", viewStack, AddStack, EditStack, DeleteStack);
                         break;
                     case Enums.MenuChoice.exit:
-                        return exitApp == true;
+                        return;
                 }
             }
             catch (SqlException ex)
             {
-                AnsiConsole.MarkupLine($"[red]{Markup.Escape(ex.Message)}[/]");
                 AnsiConsole.MarkupLine("[grey]Press any key to return to the main menu.[/]");
                 Console.ReadKey();
             }
         }
-        return exitApp;
     }
 
-    private void CrudMenu(string itemType, Action addItem, Action editItem, Action deleteItem)
+    private void CrudMenu(string itemType, Action viewItem, Action addItem, Action editItem, Action deleteItem)
     {
-        bool goBack = false;
-
-        while (!goBack)
+        while (true)
         {
             Displayer.CleanConsole();
 
@@ -79,6 +72,9 @@ internal class UserInterface
 
             switch (selection)
             {
+                case Enums.CrudChoice.viewItem:
+                    viewFlashcard();
+                    break;
                 case Enums.CrudChoice.addItem:
                     addItem();
                     break;
@@ -89,11 +85,79 @@ internal class UserInterface
                     deleteItem();
                     break;
                 case Enums.CrudChoice.mainMenu:
-                    goBack = true;
-                    break;
+                    return;
             }
         }
     }
+
+    //------------------------------------------
+    //----------------- VIEW -------------------
+    //------------------------------------------
+
+    void viewFlashcard()
+    {
+        while (true)
+        {
+            AnsiConsole.MarkupLine("[yellow]View [bold]FLASHCARDS[/][/]");
+            AnsiConsole.WriteLine();
+
+            List<Flashcard> flashcards = FilterSelectIfNeeded("yellow");
+
+            Displayer.PrintTable(ModelsMapper.FlashcardToDto(flashcards));
+            AnsiConsole.WriteLine();
+
+            if (!AnsiConsole.Confirm("View another table?"))
+                break;
+
+            AnsiConsole.WriteLine();
+        }
+    }
+
+    void viewStack()
+    {
+        while (true)
+        {
+            // AnsiConsole.MarkupLine("[green]New [bold]FLASHCARD[/][/]");
+            // AnsiConsole.WriteLine();
+
+            // // Display an "empy" stack if the user needs a new one
+            // Stack newStack = new(-1, "_New Stack");
+            // List<Stack> stacks = _database.QueryAllFromStacks();
+            // stacks.Add(newStack);
+            // stacks.Sort();
+
+            // var stack = ChoicesPrompt.Select(stacks, "Choose a stack", "green");
+            // if (stack.StackId == -1)
+            // {
+            //     AddStack();
+            //     stack = _database.QueryNewestStack();
+            // }
+            // AnsiConsole.MarkupLine($"Choosen stack: {stack.Name}");
+
+            // var recto = AnsiConsole.Ask<string>("Add a recto :");
+            // var verso = AnsiConsole.Ask<string>("Add a verso :");
+
+            // AnsiConsole.WriteLine();
+            // bool confirm = AnsiConsole.Confirm("Confirm and add the flashcard?");
+
+            // if (confirm)
+            // {
+            //     _database.AddFlashcard(stack.StackId, recto, verso);
+            //     Displayer.CrudSuccess("flashcard", "added");
+            // }
+            // else
+            //     Displayer.CrudDiscard("flashcard", "discarded");
+
+            // if (AnsiConsole.Confirm("Add another flashcard?"))
+            //     break;
+
+            // AnsiConsole.WriteLine();
+        }
+    }
+
+    //------------------------------------------
+    //----------------- ADD -------------------
+    //------------------------------------------
 
     void AddFlashcard()
     {
@@ -106,14 +170,20 @@ internal class UserInterface
             Stack newStack = new(-1, "_New Stack");
             List<Stack> stacks = _database.QueryAllFromStacks();
             stacks.Add(newStack);
-            stacks.Sort();
+            //stacks.Sort((x, y) => x.Name.CompareTo(y.Name));
 
             var stack = ChoicesPrompt.Select(stacks, "Choose a stack", "green");
             if (stack.StackId == -1)
             {
-                AddStack();
+                if (!AddStackOnce())
+                {
+                    Displayer.FlashcardNeedStackError();
+                    break;
+                }
+
                 stack = _database.QueryNewestStack();
             }
+
             AnsiConsole.MarkupLine($"Choosen stack: {stack.Name}");
 
             var recto = AnsiConsole.Ask<string>("Add a recto :");
@@ -130,7 +200,7 @@ internal class UserInterface
             else
                 Displayer.CrudDiscard("flashcard", "discarded");
 
-            if (AnsiConsole.Confirm("Add another flashcard?"))
+            if (!AnsiConsole.Confirm("Add another flashcard?"))
                 break;
 
             AnsiConsole.WriteLine();
@@ -141,19 +211,7 @@ internal class UserInterface
     {
         while (true)
         {
-            AnsiConsole.MarkupLine("[green]New [bold]STACK[/][/]");
-            AnsiConsole.WriteLine();
-            var name = AnsiConsole.Ask<string>("Add a name :");
-
-            bool confirm = AnsiConsole.Confirm("Add the stack?");
-
-            if (confirm)
-            {
-                _database.AddStack(name);
-                Displayer.CrudSuccess("stack", "added");
-            }
-            else
-                Displayer.CrudDiscard("stack", "discarded");
+            AddStackOnce();
 
             if (!AnsiConsole.Confirm("Add another Stack?"))
                 break;
@@ -162,22 +220,55 @@ internal class UserInterface
         }
     }
 
+    bool AddStackOnce()
+    {
+        AnsiConsole.MarkupLine("[green]New [bold]STACK[/][/]");
+        AnsiConsole.WriteLine();
+
+        var stacks = _database.QueryAllFromStacks();
+        var name = AnsiConsole.Ask<string>("Add a name :");
+
+        var existingNames = stacks.Select(s => s.Name).ToHashSet();
+
+        while (existingNames.Contains(name))
+        {
+            AnsiConsole.MarkupLine($"[Orange1]The name is already used. Choose another name.[/]");
+            name = AnsiConsole.Ask<string>("Add a name :");
+        }
+
+        bool confirm = AnsiConsole.Confirm("Add the stack?");
+
+        if (confirm)
+        {
+            _database.AddStack(name);
+            Displayer.CrudSuccess("stack", "added");
+        }
+        else
+            Displayer.CrudDiscard("stack", "discarded");
+
+        return confirm;
+    }
+
+    //------------------------------------------
+    //----------------- EDIT -------------------
+    //------------------------------------------
+
     void EditFlashcard()
     {
         while (true)
         {
-            AnsiConsole.MarkupLine("[blue]Edit [bold]Flashcard[/][/]");
+            AnsiConsole.MarkupLine("[blue]Edit [bold]FLASHCARD[/][/]");
             AnsiConsole.WriteLine();
-            List<Flashcard> flashcards = FilterSelectIfNeeded();
+            List<Flashcard> flashcards = FilterSelectIfNeeded("blue");
             AnsiConsole.WriteLine();
 
-            var selected = ChoicesPrompt.Select(flashcards, "Choose a Flaschard", "blue");
+            var selected = ChoicesPrompt.Select(flashcards, "Choose a Flashcard", "blue");
             string newRecto = selected.Recto;
             string newVerso = selected.Verso;
 
             string[] subChoice = { "recto", "verso" };
             List<string> dataToEdit = ChoicesPrompt.SelectMulti(subChoice, "What do you want to Edit?", "blue");
-            AnsiConsole.MarkupLine($"Currently editing {selected.Display}");
+            AnsiConsole.MarkupLine($"[blue]Currently editing:[/] '{selected.Display}'");
 
 
             if (dataToEdit.Count == 0)
@@ -188,7 +279,10 @@ internal class UserInterface
                 selected.EditVerso(AnsiConsole.Ask<string>("Enter a new verso: "));
 
             if (AnsiConsole.Confirm("Confirm?"))
+            {
                 _database.UpdateFlashcard(selected);
+                Displayer.CrudSuccess("edit", "successful");
+            }
             else
                 Displayer.CrudDiscard("edit", "canceled");
 
@@ -203,18 +297,21 @@ internal class UserInterface
     {
         while (true)
         {
-            AnsiConsole.MarkupLine("[blue]Edit [bold]Stack[/][/]");
+            AnsiConsole.MarkupLine("[blue]Edit [bold]STACK[/][/]");
             AnsiConsole.WriteLine();
             List<Stack> stacks = _database.QueryAllFromStacks();
 
             var selected = ChoicesPrompt.Select(stacks, "Choose a stack", "blue");
 
-            AnsiConsole.MarkupLine($"Currently editing '{selected.Name}'");
+            AnsiConsole.MarkupLine($"[blue]Currently editing:[/] '{selected.Name}'");
 
             selected.EditName(AnsiConsole.Ask<string>("Enter a new name: "));
 
             if (AnsiConsole.Confirm("Confirm?"))
+            {
                 _database.UpdateStack(selected);
+                Displayer.CrudSuccess("edit", "successful");
+            }
 
             else
                 Displayer.CrudDiscard("edit", "canceled");
@@ -226,13 +323,17 @@ internal class UserInterface
         }
     }
 
+    //------------------------------------------
+    //----------------- DELETE -----------------
+    //------------------------------------------
+
     void DeleteFlashcard()
     {
         while (true)
         {
-            AnsiConsole.MarkupLine($"[red]Delete [bold]Flashcard[/][/]");
+            AnsiConsole.MarkupLine($"[red]Delete [bold]FLASHCARDS[/][/]");
             AnsiConsole.WriteLine();
-            List<Flashcard> flashcards = FilterSelectIfNeeded();
+            List<Flashcard> flashcards = FilterSelectIfNeeded("red");
 
             var toDelete = ChoicesPrompt.SelectMulti(flashcards, "red");
             if (toDelete.Count == 0)
@@ -262,8 +363,7 @@ internal class UserInterface
 
     void DeleteStack()
     {
-        bool doIt = true;
-        while (doIt)
+        while (true)
         {
             AnsiConsole.MarkupLine("[red]Delete [bold]STACKS[/][/]");
             AnsiConsole.WriteLine();
@@ -288,19 +388,27 @@ internal class UserInterface
             else
                 Displayer.CrudDiscard("deletion", "canceled");
 
-            doIt = AnsiConsole.Confirm("Delete other Stacks?");
+            if (!AnsiConsole.Confirm("Delete other Stacks?"))
+                break;
+
             AnsiConsole.WriteLine();
         }
     }
 
-    private List<Flashcard> FilterSelectIfNeeded()
+    //------------------------------------------
+    //----------------- HELPERS ----------------
+    //------------------------------------------
+
+    private List<Flashcard> FilterSelectIfNeeded(string color)
     {
         var filter = AnsiConsole.Confirm("Filter per stack?");
+        AnsiConsole.WriteLine();
 
         if (filter)
         {
             List<Stack> stacks = _database.QueryAllFromStacks();
-            Stack stack = ChoicesPrompt.Select(stacks, "Choose a stack", "red");
+            Stack stack = ChoicesPrompt.Select(stacks, "Choose a stack", color);
+            AnsiConsole.MarkupLine($"[bold]{stack.Name}[/]");
             return _database.QueryFlashcardsFromStack(stack);
         }
 
